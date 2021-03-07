@@ -40,7 +40,7 @@ app.post('/price', async (req, res) => {
         let pageData: PageElementRecord[] = await scraper.launch(url);
         let priceOnPage = scorer.run(pageData);
         if(priceOnPage){
-            res.status(200).send(priceOnPage);
+            res.status(200).json(priceOnPage);
         }
     }
 })
