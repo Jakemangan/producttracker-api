@@ -20,7 +20,7 @@ export class Scorer{
 
     run(pageElementRecords: PageElementRecord[]): string {
         this.largestFontSize = this.getLargestFontSize(pageElementRecords);
-        console.log("Largest font size:", this.largestFontSize);
+        // console.log("Largest font size:", this.largestFontSize);
 
         let rankings: PageElementRanking[] = [];
         pageElementRecords.forEach(elementData => {
@@ -73,7 +73,7 @@ export class Scorer{
     }
 
     scoreBasedOnYPosition(bboxJson: string): number{
-        console.log(bboxJson);
+        // console.log(bboxJson);
         let bbox: ElementBoundingBox = JSON.parse(bboxJson);
 
         if(
@@ -156,7 +156,7 @@ export class Scorer{
                     current = fontSize;
                 }
             } catch(err) {
-                console.log("Element does not have font size");
+                // console.log("Element does not have font size");
             }
         })
         return current;

@@ -16,9 +16,9 @@ export class Scraper{
         await page.setUserAgent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.190 Safari/537.36");
         await page.waitForSelector('body');
 
-        page.on('console', event => {
-            console.log(event._text);
-        })
+        // page.on('console', event => {
+        //     console.log(event._text);
+        // })
 
         const nodes = await page.$$("body *");
 
@@ -75,15 +75,15 @@ export class Scraper{
             * Function definition
              */
             function couldBePrice(element: any): boolean {
-                console.log(element.className);
+                // console.log(element.className);
 
                 let couldBePrice = true;
                 if(!element.className) {
-                    console.log("1")
+                    // console.log("1")
                     return false;
                 }
                 if(typeof(element.className) != 'string') {
-                    console.log("2")
+                    // console.log("2")
                     return false;
                 }
                 // if(element.textContent.replace(/\s|\n|\r/g, "") === "") {
@@ -91,7 +91,7 @@ export class Scraper{
                 //     return false;
                 // }
                 if(element.textContent.replace(/\s/g, "").trim().length > 15 || element.textContent.replace(/\s/g, "").trim().length <= 1) {
-                    console.log("4")
+                    // console.log("4")
                     return false;
                 }
                 // if(!element.textContent.replace(/\s/g, "").match(/(\d+\.\d{1,2})/g)) {
@@ -102,7 +102,7 @@ export class Scraper{
                 //         return false;
                 //     }
                 // }
-                console.log(couldBePrice)
+                // console.log(couldBePrice)
                 return couldBePrice;
             }
         })
