@@ -1,10 +1,10 @@
-import {Scraper} from "./src/services/scraper";
-import {Scorer} from "./src/services/scorer";
+import {Scraper} from "./services/scraper";
+import {Scorer} from "./services/scorer";
 import cors from "cors";
 import express from "express";
 import * as dotenv from "dotenv";
 import * as bodyParser from "body-parser";
-import {PageElementRecord} from "./src/models/PageElementRecord";
+import {PageElementRecord} from "./models/PageElementRecord";
 
 // let url = "https://www.ikea.com/gb/en/p/godmorgon-high-cabinet-brown-stained-ash-effect-40457851/";
 // let url = "https://www.tesco.com/groceries/en-GB/products/254896546?preservedReferrer=https://www.tesco.com/";
