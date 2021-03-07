@@ -6,7 +6,10 @@ export class Scraper{
     constructor(){}
 
     async launch(url: string): Promise<PageElementRecord[]>{
-        let browser = await puppeteer.launch({headless: true});
+        const browser = await puppeteer.launch({
+            headless: true,
+            args: ['--no-sandbox','--disable-setuid-sandbox']
+        })
         let page = await browser.newPage();
         page.setDefaultNavigationTimeout(0);
         await page.goto(url);
