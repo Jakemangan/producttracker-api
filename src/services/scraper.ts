@@ -1,11 +1,12 @@
 import puppeteer from "puppeteer";
 import {text} from "express";
 import {PageElementRecord} from "../models/PageElementRecord";
+import {ScrapeResults} from "../models/ScrapeResults";
 
 export class Scraper{
     constructor(){}
 
-    async launch(url: string): Promise<PageElementRecord[]>{
+    async launch(url: string): Promise<ScrapeResults>{
         const browser = await puppeteer.launch({
             headless: true,
             args: ['--no-sandbox','--disable-setuid-sandbox']
@@ -15,17 +16,17 @@ export class Scraper{
         await page.goto(url);
         await page.setUserAgent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.190 Safari/537.36");
         await page.waitForSelector('body');
-
+        let pageTitle = await page.title();
         // page.on('console', event => {
         //     console.log(event._text);
         // })
 
         const nodes = await page.$$("body *");
 
-        let data: PageElementRecord[] = await page.$$eval('body *', elements => {
+        let pageElementRecords: PageElementRecord[] = await page.$$eval('body *', elements => {
             // console.log("Elements: ", JSON.stringify(elements));
 
-            let records = [];
+            let records: PageElementRecord[] = [];
             elements.forEach(element => {
                 // console.log("Element-tc: ", element.textContent.replace(/\s|\n|\r/g, ""));
                 // console.log("Element-cn: ", element.className);
@@ -70,7 +71,6 @@ export class Scraper{
             })
             return records;
 
-
             /*
             * Function definition
              */
@@ -107,10 +107,17 @@ export class Scraper{
             }
         })
 
-        // console.log("Data: ", data);
-        // console.log("Length: ", data.length);
-        // let json = JSON.stringify(data);
-        return data;
+        const images = await page.evaluate(() => Array.from(document.images, e => e.src));
+
+        // console.log("Data: ", pageElementRecords);
+        // console.log("Length: ", pageElementRecords.length);
+        // let json = JSON.stringify(pageElementRecords);
+
+        let toReturn: ScrapeResults = {
+            title: pageTitle,
+            pageElementRecords: pageElementRecords
+        }
+        return toReturn;
     }
 
 

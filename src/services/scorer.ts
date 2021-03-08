@@ -1,4 +1,3 @@
-
 /*
 * Score criteria:
 * - TextContent length is less than 30
@@ -18,7 +17,7 @@ export class Scorer{
 
     constructor(){}
 
-    run(pageElementRecords: PageElementRecord[]): string {
+    run(pageElementRecords: PageElementRecord[]): number {
         this.largestFontSize = this.getLargestFontSize(pageElementRecords);
         // console.log("Largest font size:", this.largestFontSize);
 
@@ -44,7 +43,7 @@ export class Scorer{
             console.log(rankings[i].elementData.textContent + " : " + rankings[i].totalScore + " (" + JSON.stringify(rankings[i].rankingsMap) + ")");
         }
 
-        return rankings[0].elementData.textContent
+        return parseInt(rankings[0].elementData.textContent.replace(/[^\d\n]/g, ""))
     }
 
     scoreElement(elementData: PageElementRecord): PageElementRanking {
