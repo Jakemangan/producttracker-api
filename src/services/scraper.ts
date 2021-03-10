@@ -211,12 +211,16 @@ export class Scraper{
     couldBeCurrency(pageElementRecord: PageElementRecord): boolean {
         let currencyCharacters = ["£", "$"];
 
+        //TODO :: Add in some kind of filtering to exclude massive strings/only include strings with digits etc
+
+        if(pageElementRecord.textContent.replace(/\s/g, "").trim().length > 50 || pageElementRecord.textContent.replace(/\s/g, "").trim().length <= 1) {
+            return false;
+        }
+
         let couldBeCurrency = false;
         currencyCharacters.forEach(char => {
             if(pageElementRecord.textContent.includes(char)){
                 couldBeCurrency = true;
-            } else {
-                couldBeCurrency = false;
             }
         })
         return couldBeCurrency;

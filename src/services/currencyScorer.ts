@@ -17,9 +17,11 @@ export class CurrencyScorer{
         records.forEach(record => {
             if(record.textContent.includes("£")){
                 this.gbpTally++;
+                return;
             }
             if(record.textContent.includes("$")){
                 this.dollarTally++;
+                return;
             }
         });
 

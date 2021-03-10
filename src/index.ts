@@ -52,7 +52,7 @@ let trackerRepo = new ProductTrackerRepo(poolHandler);
 temp();
 
 async function temp(){
-    let url = "https://www.newegg.com/msi-geforce-rtx-3080-rtx-3080-gaming-x-trio-10g/p/N82E16814137597?Description=rtx%203080&cm_re=rtx_3080-_-14-137-597-_-Product&quicklink=true";
+    let url = "https://www.ikea.com/gb/en/p/godmorgon-high-cabinet-brown-stained-ash-effect-40457851/";
     let scrapeResult: ScrapeResults = await scraper.launch(url);
     console.log(scrapeResult);
     let largestImageSrc = imageScorer.run(scrapeResult.couldBeImageRecords);
