@@ -52,7 +52,7 @@ let trackerRepo = new ProductTrackerRepo(poolHandler);
 temp();
 
 async function temp(){
-    let url = "https://www.ikea.com/gb/en/p/godmorgon-high-cabinet-brown-stained-ash-effect-40457851/";
+    let url = "https://www.amazon.co.uk/Palit-GamingPro-Ray-Tracing-Graphics-DisplayPort/dp/B08LDS72P2/ref=sr_1_1?dchild=1&keywords=gpu&qid=1615415153&refinements=p_n_availability%3A419162031&rnid=419160031&sr=8-1";
     let scrapeResult: ScrapeResults = await scraper.launch(url);
     console.log(scrapeResult);
     let largestImageSrc = imageScorer.run(scrapeResult.couldBeImageRecords);

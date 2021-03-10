@@ -1,5 +1,5 @@
 import puppeteer from "puppeteer";
-import {PageElementRecord} from "../models/PageElementRecord";
+import {ElementBoundingBox, PageElementRecord} from "../models/PageElementRecord";
 import {ScrapeResults} from "../models/ScrapeResults";
 
 /*
@@ -7,7 +7,12 @@ import {ScrapeResults} from "../models/ScrapeResults";
 * - Price
 * - Availability
 * - Image
-* -
+* - Currency
+ */
+
+/*
+* TODO :: Remove as much junk as possible e.g. script tags
+* TODO :: Add in some filtering to remove as much noise from each individual couldBe function
  */
 
 export class Scraper{
@@ -192,19 +197,44 @@ export class Scraper{
     }
 
     couldBeAvailability(pageElementRecord: PageElementRecord): boolean {
+        //TODO :: Add in some kind of filtering to exclude massive strings/empty strings
+
+        let bbox: ElementBoundingBox = JSON.parse(pageElementRecord.bboxJson);
+
+        if(
+            bbox.x === 0 &&
+            bbox.y === 0 &&
+            bbox.height === 0 &&
+            bbox.width === 0
+        ){
+            return false;
+        }
+
+        // Ignore anything below 600 pixels height
+        if(bbox.y > 600){
+            return false;
+        }
+
         let textContentStrings = [
             "unavailable",
             "not in stock",
             "out of stock"
         ];
 
-        let couldBeAvailability = false;
-        textContentStrings.forEach(string => {
-            couldBeAvailability = pageElementRecord.textContent.toLowerCase().includes(string);
-            if(couldBeAvailability){
-                return;
-            }
+        if(pageElementRecord.textContent.includes("unavailable")){
+            console.log("Here");
+        }
+
+        let couldBeAvailability = textContentStrings.some(str => {
+            return pageElementRecord.textContent.toLowerCase().includes(str);
         });
+
+        // textContentStrings.forEach(string => {
+        //     couldBeAvailability = pageElementRecord.textContent.toLowerCase().includes(string);
+        //     if(couldBeAvailability){
+        //         return;
+        //     }
+        // });
         return couldBeAvailability;
     }
 
