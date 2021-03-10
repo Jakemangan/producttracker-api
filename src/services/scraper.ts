@@ -3,6 +3,14 @@ import {text} from "express";
 import {PageElementRecord} from "../models/PageElementRecord";
 import {ScrapeResults} from "../models/ScrapeResults";
 
+/*
+* Scrape buckets:
+* - Price
+* - Availability
+* - Image
+* -
+ */
+
 export class Scraper{
     constructor(){}
 
@@ -43,11 +51,11 @@ export class Scraper{
                 //     cn: element.className
                 // })
 
-                let couldBePriceFn = couldBePrice;
-
-                if(!couldBePriceFn(element)){
-                    return;
-                }
+                // let couldBePriceFn = couldBePrice;
+                //
+                // if(!couldBePriceFn(element)){
+                //     return;
+                // }
 
                 let computedStyles = window.getComputedStyle(element);
                 let fontSize = computedStyles["fontSize"];
@@ -71,40 +79,7 @@ export class Scraper{
             })
             return records;
 
-            /*
-            * Function definition
-             */
-            function couldBePrice(element: any): boolean {
-                // console.log(element.className);
 
-                let couldBePrice = true;
-                if(!element.className) {
-                    // console.log("1")
-                    return false;
-                }
-                if(typeof(element.className) != 'string') {
-                    // console.log("2")
-                    return false;
-                }
-                // if(element.textContent.replace(/\s|\n|\r/g, "") === "") {
-                //     console.log("3")
-                //     return false;
-                // }
-                if(element.textContent.replace(/\s/g, "").trim().length > 15 || element.textContent.replace(/\s/g, "").trim().length <= 1) {
-                    // console.log("4")
-                    return false;
-                }
-                // if(!element.textContent.replace(/\s/g, "").match(/(\d+\.\d{1,2})/g)) {
-                //     if(element.textContent.includes("£") || element.textContent.replace(/\s/g, "").match(/\d+/g)){
-                //         return true;
-                //     } else {
-                //         console.log("6")
-                //         return false;
-                //     }
-                // }
-                // console.log(couldBePrice)
-                return couldBePrice;
-            }
         })
 
         const images = await page.evaluate(() => Array.from(document.images, e => e.src));
@@ -121,6 +96,45 @@ export class Scraper{
     }
 
 
+    couldBePrice(element: any): boolean {
+        // console.log(element.className);
+
+        let couldBePrice = true;
+        if(!element.className) {
+            // console.log("1")
+            return false;
+        }
+        if(typeof(element.className) != 'string') {
+            // console.log("2")
+            return false;
+        }
+        // if(element.textContent.replace(/\s|\n|\r/g, "") === "") {
+        //     console.log("3")
+        //     return false;
+        // }
+        if(element.textContent.replace(/\s/g, "").trim().length > 15 || element.textContent.replace(/\s/g, "").trim().length <= 1) {
+            // console.log("4")
+            return false;
+        }
+        // if(!element.textContent.replace(/\s/g, "").match(/(\d+\.\d{1,2})/g)) {
+        //     if(element.textContent.includes("£") || element.textContent.replace(/\s/g, "").match(/\d+/g)){
+        //         return true;
+        //     } else {
+        //         console.log("6")
+        //         return false;
+        //     }
+        // }
+        // console.log(couldBePrice)
+        return couldBePrice;
+    }
+
+    couldBeImage(element: any): boolean {
+
+    }
+
+    couldBeAvailability(element: any): boolean {
+        
+    }
 }
 
 

@@ -47,7 +47,6 @@ app.post('/tracker/add', async (req, res) => {
         let url = req.body.url
         let owner = req.body.owner
 
-
         let scrapeResult: ScrapeResults = await scraper.launch(url);
         let priceAsInt = scorer.run(scrapeResult.pageElementRecords);
 
@@ -65,16 +64,12 @@ app.post('/tracker/add', async (req, res) => {
             prettyPrice: parsePrettyPrice(priceAsInt, "£")
         }
 
-        try{
+        try {
             await trackerRepo.insertNewTracker(newTracker);
             res.status(200).json(newTracker);
         } catch(err){
             res.status(400).json(err);
         }
-
-
-
-
     }
 })
 
@@ -113,14 +108,9 @@ app.listen(process.env.PORT, () => {
     return console.log(`server is listening on ${process.env.PORT}`);
 });
 
-
 function parsePrettyPrice(input: number, currencyType: string): string{
     let lengthOfPriceString = input.toString().length;
     let priceAsString = input.toString();
     let decimalSlice = priceAsString.slice(lengthOfPriceString-2, lengthOfPriceString);
     return currencyType + priceAsString.slice(0, lengthOfPriceString-2) + "." + decimalSlice;
 }
-
-
-
-
