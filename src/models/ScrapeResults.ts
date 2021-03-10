@@ -2,5 +2,9 @@ import {PageElementRecord} from "./PageElementRecord";
 
 export interface ScrapeResults {
     title: string;
-    pageElementRecords: PageElementRecord[]
+    allPageElementRecords: PageElementRecord[];
+    couldBePriceRecords: PageElementRecord[];
+    couldBeImageRecords: PageElementRecord[];
+    couldBeAvailabilityRecords: PageElementRecord[];
+    couldBeCurrencyRecords: PageElementRecord[];
 }

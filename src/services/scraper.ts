@@ -1,5 +1,4 @@
 import puppeteer from "puppeteer";
-import {text} from "express";
 import {PageElementRecord} from "../models/PageElementRecord";
 import {ScrapeResults} from "../models/ScrapeResults";
 
@@ -62,49 +61,97 @@ export class Scraper{
                 let textDecoration = computedStyles["textDecoration"];
                 let color = computedStyles["color"];
                 let bBox = element.getBoundingClientRect();
+
+                let attributes = {};
+                let attributeNames = element.getAttributeNames();
+
+                attributeNames.forEach(attribute => {
+                    attributes[attribute] = element.getAttribute(attribute);
+                });
+
+                /*
+                * Trim and replace classname if there is a classname string in the element
+                 */
+                let className = "";
+                if(element.className && typeof(element.className) == 'string'){
+                    className = element.className.trim().replace(/\n/g, "").replace(/\r/g, "");
+                } else {
+                    className = element.className;
+                }
+
+                /*
+                * Trim the textContent if there is any
+                 */
+                let textContent = "";
+                if(element.textContent && typeof(element.className) == 'string'){
+                    textContent = element.textContent.trim()
+                } else {
+                    textContent = element.textContent;
+                }
+
                 let record: PageElementRecord = {
                     bboxJson: JSON.stringify(bBox),
                     fontSize: fontSize,
                     textDecoration: textDecoration,
                     color: color,
-                    className: element.className.trim().replace(/\n/g, "").replace(/\r/g, ""),
-                    textContent: element.textContent.trim().replace(/\s/g, ""),
+                    className: className,
+                    textContent: textContent, //.replace(/\s/g, ""),
                     tag: element.tagName,
-                    id: element.id
-                }
+                    id: element.id,
+                    attributes: attributes
+                };
                 records.push(record);
                 // console.log("FontSize: ", fontSize);
                 // console.log("Element: ", element.className);
                 // classLists.push(element.className);
             })
             return records;
-
-
-        })
+        });
 
         const images = await page.evaluate(() => Array.from(document.images, e => e.src));
+
+        let couldBePriceRecords = [];
+        let couldBeAvailabilityRecords = [];
+        let couldBeImageRecords = [];
+        let couldBeCurrencyRecords = [];
+
+        pageElementRecords.forEach(record => {
+            if(this.couldBePrice(record)){
+                couldBePriceRecords.push(record);
+            }
+            if(this.couldBeImage(record)){
+                couldBeImageRecords.push(record);
+            }
+            if(this.couldBeAvailability(record)){
+                couldBeAvailabilityRecords.push(record);
+            }
+            if(this.couldBeCurrency(record)){
+                couldBeCurrencyRecords.push(record);
+            }
+        })
 
         // console.log("Data: ", pageElementRecords);
         // console.log("Length: ", pageElementRecords.length);
         // let json = JSON.stringify(pageElementRecords);
 
-        let toReturn: ScrapeResults = {
+        return {
             title: pageTitle,
-            pageElementRecords: pageElementRecords
-        }
-        return toReturn;
+            allPageElementRecords: pageElementRecords,
+            couldBePriceRecords: couldBePriceRecords,
+            couldBeImageRecords: couldBeImageRecords,
+            couldBeAvailabilityRecords: couldBeAvailabilityRecords,
+            couldBeCurrencyRecords: couldBeCurrencyRecords
+        };
     }
 
-
-    couldBePrice(element: any): boolean {
+    couldBePrice(pageElementRecord: PageElementRecord): boolean {
         // console.log(element.className);
 
-        let couldBePrice = true;
-        if(!element.className) {
+        if(!pageElementRecord.className) {
             // console.log("1")
             return false;
         }
-        if(typeof(element.className) != 'string') {
+        if(typeof(pageElementRecord.className) != 'string') {
             // console.log("2")
             return false;
         }
@@ -112,7 +159,7 @@ export class Scraper{
         //     console.log("3")
         //     return false;
         // }
-        if(element.textContent.replace(/\s/g, "").trim().length > 15 || element.textContent.replace(/\s/g, "").trim().length <= 1) {
+        if(pageElementRecord.textContent.replace(/\s/g, "").trim().length > 15 || pageElementRecord.textContent.replace(/\s/g, "").trim().length <= 1) {
             // console.log("4")
             return false;
         }
@@ -125,15 +172,54 @@ export class Scraper{
         //     }
         // }
         // console.log(couldBePrice)
-        return couldBePrice;
+        return true;
     }
 
-    couldBeImage(element: any): boolean {
+    couldBeImage(pageElementRecord: PageElementRecord): boolean {
+        let tagsToIgnore = [
+            "script", "video"
+        ];
 
+        if(pageElementRecord.tag.toLowerCase() == "img"){
+            return true;
+        }
+
+        if("src" in pageElementRecord.attributes){
+            return (pageElementRecord.tag.toLowerCase() in tagsToIgnore);
+        }
+
+        return false;
     }
 
-    couldBeAvailability(element: any): boolean {
-        
+    couldBeAvailability(pageElementRecord: PageElementRecord): boolean {
+        let textContentStrings = [
+            "unavailable",
+            "not in stock",
+            "out of stock"
+        ];
+
+        let couldBeAvailability = false;
+        textContentStrings.forEach(string => {
+            couldBeAvailability = pageElementRecord.textContent.toLowerCase().includes(string);
+            if(couldBeAvailability){
+                return;
+            }
+        });
+        return couldBeAvailability;
+    }
+
+    couldBeCurrency(pageElementRecord: PageElementRecord): boolean {
+        let currencyCharacters = ["£", "$"];
+
+        let couldBeCurrency = false;
+        currencyCharacters.forEach(char => {
+            if(pageElementRecord.textContent.includes(char)){
+                couldBeCurrency = true;
+            } else {
+                couldBeCurrency = false;
+            }
+        })
+        return couldBeCurrency;
     }
 }
 

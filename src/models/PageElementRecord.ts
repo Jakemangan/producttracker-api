@@ -7,6 +7,7 @@ export interface PageElementRecord {
     textContent: string;
     tag: string;
     id: string;
+    attributes: {};
 }
 
 export interface ElementBoundingBox {

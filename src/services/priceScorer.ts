@@ -9,9 +9,9 @@
  */
 
 import {ElementBoundingBox, PageElementRecord} from "../models/PageElementRecord";
-import {ElementRankingMap, PageElementRanking} from "../models/PageElementRanking";
+import {ElementPriceRankingMap, PageElementPriceRanking} from "../models/PageElementPriceRanking";
 
-export class Scorer{
+export class PriceScorer {
 
     private largestFontSize: number;
 
@@ -21,7 +21,7 @@ export class Scorer{
         this.largestFontSize = this.getLargestFontSize(pageElementRecords);
         // console.log("Largest font size:", this.largestFontSize);
 
-        let rankings: PageElementRanking[] = [];
+        let rankings: PageElementPriceRanking[] = [];
         pageElementRecords.forEach(elementData => {
             rankings.push(this.scoreElement(elementData))
         })
@@ -40,22 +40,22 @@ export class Scorer{
 
         console.log("Top 25 guesses: ");
         for(let i = 0; i<25;i++){
-            console.log(rankings[i].elementData.textContent + " : " + rankings[i].totalScore + " (" + JSON.stringify(rankings[i].rankingsMap) + ")");
+            console.log(rankings[i].elementData.textContent + " : " + rankings[i].totalScore + " (" + JSON.stringify(rankings[i].rankingMap) + ")");
         }
 
         return parseInt(rankings[0].elementData.textContent.replace(/[^\d\n]/g, ""))
     }
 
-    scoreElement(elementData: PageElementRecord): PageElementRanking {
-        let record: ElementRankingMap = {
-            yPosition: this.scoreBasedOnYPosition(elementData.bboxJson),
-            largestFontSize: this.scoreBasedOnLargestFontSize(elementData.fontSize),
-            presenceOfCurrency: this.scoreBasedOnPresenceOfCurrency(elementData.textContent),
-            textContentLength: this.scoreBasedOnTextContentLength(elementData.textContent),
-            priceInClassname: this.scoreBasedOnPriceInClassname(elementData.className),
-            noStrikethrough: this.scoreBasedOnNoStrikethrough(elementData.textDecoration),
-            emptyBasket: this.scoreBasedOnEmptyBasket(elementData.textContent),
-            presenceOfDigits: this.scoreBasedOnPresenceOfDigits(elementData.textContent)
+    scoreElement(record: PageElementRecord): PageElementPriceRanking {
+        let rankingMap: ElementPriceRankingMap = {
+            yPosition: this.scoreBasedOnYPosition(record.bboxJson),
+            largestFontSize: this.scoreBasedOnLargestFontSize(record.fontSize),
+            presenceOfCurrency: this.scoreBasedOnPresenceOfCurrency(record.textContent),
+            textContentLength: this.scoreBasedOnTextContentLength(record.textContent),
+            priceInClassname: this.scoreBasedOnPriceInClassname(record.className),
+            noStrikethrough: this.scoreBasedOnNoStrikethrough(record.textDecoration),
+            emptyBasket: this.scoreBasedOnEmptyBasket(record.textContent),
+            presenceOfDigits: this.scoreBasedOnPresenceOfDigits(record.textContent)
         }
 
         let runningScore = 0;
@@ -66,8 +66,8 @@ export class Scorer{
 
         return {
             totalScore: runningScore,
-            rankingsMap: record,
-            elementData: elementData
+            rankingMap: rankingMap,
+            elementData: record
         }
     }
 

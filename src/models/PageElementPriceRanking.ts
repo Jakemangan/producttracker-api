@@ -1,12 +1,12 @@
 import {PageElementRecord} from "./PageElementRecord";
 
-export interface PageElementRanking {
+export interface PageElementPriceRanking {
     totalScore: number;
-    rankingsMap: ElementRankingMap;
+    rankingMap: ElementPriceRankingMap;
     elementData: PageElementRecord
 }
 
-export interface ElementRankingMap {
+export interface ElementPriceRankingMap {
     yPosition: number;
     largestFontSize: number;
     presenceOfCurrency: number;
