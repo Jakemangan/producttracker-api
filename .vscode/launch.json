@@ -18,16 +18,20 @@
         },
         {
             "name": "Node",
-            "type": "node",
+            "type": "pwa-node",
             "request": "launch",
             "runtimeExecutable": "node",
             "runtimeArgs": ["--nolazy", "-r", "ts-node/register/transpile-only"],
             "console": "integratedTerminal",
-            "args": ["index.ts"],
+            "args": ["src/index.ts"],
             
             "cwd": "${workspaceRoot}",
             "internalConsoleOptions": "openOnSessionStart",
-            "skipFiles": ["<node_internals>/**", "node_modules/**"]
+            "skipFiles": ["<node_internals>/**", "node_modules/**"],
+            "resolveSourceMapLocations": [
+                "${workspaceFolder}/**",
+                "!**/node_modules/**"
+            ]
           }
     ]
 }

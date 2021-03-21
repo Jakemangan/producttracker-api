@@ -15,7 +15,7 @@ import {ScrapeResults} from "../models/ScrapeResults";
 * TODO :: Add in some filtering to remove as much noise from each individual couldBe function
  */
 
-export class Scraper{
+export class WebsiteScraper {
     constructor(){}
 
     async launch(url: string): Promise<ScrapeResults>{

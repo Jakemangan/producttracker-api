@@ -1,5 +1,5 @@
-import {ElementBoundingBox, PageElementRecord} from "../models/PageElementRecord";
-import {ElementImageRankingMap, PageElementImageRanking} from "../models/PageElementImageRanking";
+import {ElementBoundingBox, PageElementRecord} from "../../models/PageElementRecord";
+import {ElementImageRankingMap, PageElementImageRanking} from "../../models/PageElementImageRanking";
 
 export class ImageScorer{
     constructor(){}

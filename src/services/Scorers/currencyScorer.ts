@@ -1,5 +1,5 @@
-import {PageElementRecord} from "../models/PageElementRecord";
-import {CurrencyType} from "../models/enums/CurrencyType";
+import {PageElementRecord} from "../../models/PageElementRecord";
+import {CurrencyType} from "../../models/enums/CurrencyType";
 
 /*
 * TODO :: Expand this to be able to detect EUR, USD, AUD, GBP, etc etc, not just $ and £

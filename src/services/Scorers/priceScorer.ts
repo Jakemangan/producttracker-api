@@ -8,8 +8,8 @@
 * - BBox Y is less than 600
  */
 
-import {ElementBoundingBox, PageElementRecord} from "../models/PageElementRecord";
-import {ElementPriceRankingMap, PageElementPriceRanking} from "../models/PageElementPriceRanking";
+import {ElementBoundingBox, PageElementRecord} from "../../models/PageElementRecord";
+import {ElementPriceRankingMap, PageElementPriceRanking} from "../../models/PageElementPriceRanking";
 
 export class PriceScorer {
 
@@ -18,6 +18,7 @@ export class PriceScorer {
     constructor(){}
 
     run(pageElementRecords: PageElementRecord[]): number {
+        //TODO :: Make this largest font size of only elements that have digits in or match price regex
         this.largestFontSize = this.getLargestFontSize(pageElementRecords);
         // console.log("Largest font size:", this.largestFontSize);
 
@@ -46,7 +47,7 @@ export class PriceScorer {
         return parseInt(rankings[0].elementData.textContent.replace(/[^\d\n]/g, ""))
     }
 
-    scoreElement(record: PageElementRecord): PageElementPriceRanking {
+    private scoreElement(record: PageElementRecord): PageElementPriceRanking {
         let rankingMap: ElementPriceRankingMap = {
             yPosition: this.scoreBasedOnYPosition(record.bboxJson),
             largestFontSize: this.scoreBasedOnLargestFontSize(record.fontSize),
@@ -60,8 +61,8 @@ export class PriceScorer {
 
         let runningScore = 0;
 
-        Object.keys(record).forEach(key => {
-            runningScore += record[key];
+        Object.keys(rankingMap).forEach(key => {
+            runningScore += rankingMap[key];
         })
 
         return {
@@ -71,7 +72,7 @@ export class PriceScorer {
         }
     }
 
-    scoreBasedOnYPosition(bboxJson: string): number{
+    private scoreBasedOnYPosition(bboxJson: string): number{
         // console.log(bboxJson);
         let bbox: ElementBoundingBox = JSON.parse(bboxJson);
 
@@ -91,7 +92,7 @@ export class PriceScorer {
         }
     }
 
-    scoreBasedOnLargestFontSize(fontsize: string): number{
+    private scoreBasedOnLargestFontSize(fontsize: string): number{
         let fontSize = parseInt(fontsize.replace("/px/g", ""));
         if(fontSize === this.largestFontSize){
             return 1;
@@ -100,7 +101,7 @@ export class PriceScorer {
         return 0;
     }
 
-    scoreBasedOnPresenceOfCurrency(textContent: string): number{
+    private scoreBasedOnPresenceOfCurrency(textContent: string): number{
         if(textContent.includes("£") || textContent.includes("$")){
             return 1;
         }
@@ -108,7 +109,7 @@ export class PriceScorer {
         return 0;
     }
 
-    scoreBasedOnTextContentLength(textContent: string): number{
+    private scoreBasedOnTextContentLength(textContent: string): number{
         if(textContent.length < 30){
             return 1;
         }
@@ -116,7 +117,7 @@ export class PriceScorer {
         return 0;
     }
 
-    scoreBasedOnPriceInClassname(className: string): number{
+    private scoreBasedOnPriceInClassname(className: string): number{
         if(className.toLowerCase().includes("price")){
             return 1;
         }
@@ -124,7 +125,7 @@ export class PriceScorer {
         return 0;
     }
 
-    scoreBasedOnNoStrikethrough(textDecoration: string): number{
+    private scoreBasedOnNoStrikethrough(textDecoration: string): number{
         if(!textDecoration.toLowerCase().includes("line-through")){
             return 1;
         }
@@ -132,21 +133,21 @@ export class PriceScorer {
         return 0;
     }
 
-    scoreBasedOnEmptyBasket(textContent: string){
+    private scoreBasedOnEmptyBasket(textContent: string){
         if(textContent.includes("£0.00") || textContent.includes("$0.00")){
             return -3;
         }
         return 0;
     }
 
-    scoreBasedOnPresenceOfDigits(textContent: string){
+    private scoreBasedOnPresenceOfDigits(textContent: string){
         if(textContent.match(/(\d+)/g)){
             return 1;
         }
         return -5;
     }
 
-    getLargestFontSize(elementData: any): number{
+    private getLargestFontSize(elementData: any): number{
         let current = null;
         elementData.forEach(element => {
             try {
