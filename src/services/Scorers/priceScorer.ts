@@ -25,6 +25,9 @@ export class PriceScorer {
         let rankings: PageElementPriceRanking[] = [];
         pageElementRecords.forEach(elementData => {
             rankings.push(this.scoreElement(elementData))
+            if(elementData.textContent == "£625 pcm"){
+                console.log("Here");
+            }
         })
 
         rankings.sort((a, b) => {
@@ -44,7 +47,16 @@ export class PriceScorer {
             console.log(rankings[i].elementData.textContent + " : " + rankings[i].totalScore + " (" + JSON.stringify(rankings[i].rankingMap) + ")");
         }
 
-        return parseInt(rankings[0].elementData.textContent.replace(/[^\d\n]/g, ""))
+        let selectedPrice = rankings[0].elementData.textContent;
+        
+        if(!selectedPrice.includes(".")){
+            selectedPrice += ".00";
+        }
+
+        //Replace any non-digits with nothing
+        selectedPrice = selectedPrice.replace(/[^\d\n]/g, "")
+
+        return parseInt(selectedPrice);
     }
 
     private scoreElement(record: PageElementRecord): PageElementPriceRanking {
@@ -56,7 +68,8 @@ export class PriceScorer {
             priceInClassname: this.scoreBasedOnPriceInClassname(record.className),
             noStrikethrough: this.scoreBasedOnNoStrikethrough(record.textDecoration),
             emptyBasket: this.scoreBasedOnEmptyBasket(record.textContent),
-            presenceOfDigits: this.scoreBasedOnPresenceOfDigits(record.textContent)
+            presenceOfDigits: this.scoreBasedOnPresenceOfDigits(record.textContent),
+            moreThanOneCurrencyValue: this.scoreBasedOnMoreThanOneCurrencyValue(record.textContent)
         }
 
         let runningScore = 0;
@@ -85,7 +98,7 @@ export class PriceScorer {
             return -1;
         }
 
-        if(bbox.y < 600){
+        if(bbox.y < 700){
             return 1;
         } else {
             return 0;
@@ -103,7 +116,7 @@ export class PriceScorer {
 
     private scoreBasedOnPresenceOfCurrency(textContent: string): number{
         if(textContent.includes("£") || textContent.includes("$")){
-            return 1;
+            return 3;
         }
 
         return 0;
@@ -147,6 +160,15 @@ export class PriceScorer {
         return -5;
     }
 
+    private scoreBasedOnMoreThanOneCurrencyValue(textContent: string){
+        let total = (textContent.split("£").length-1) + (textContent.split("$").length-1);
+        if(total > 1){
+            return -1;
+        } else {
+            return 0;
+        }
+    }
+
     private getLargestFontSize(elementData: any): number{
         let current = null;
         elementData.forEach(element => {
@@ -161,4 +183,6 @@ export class PriceScorer {
         })
         return current;
     }
+
+    
 }

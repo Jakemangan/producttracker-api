@@ -1,6 +1,9 @@
-import puppeteer from "puppeteer";
+// import puppeteer from "puppeteer";
+import puppeteer from "puppeteer-extra";
+import StealthPlugin from "puppeteer-extra-plugin-stealth";
 import {ElementBoundingBox, PageElementRecord} from "../models/PageElementRecord";
 import {ScrapeResults} from "../models/ScrapeResults";
+import UserAgent from 'user-agents';
 
 /*
 * Scrape buckets:
@@ -19,14 +22,20 @@ export class WebsiteScraper {
     constructor(){}
 
     async launch(url: string): Promise<ScrapeResults>{
+        puppeteer.use(StealthPlugin());
+        
         const browser = await puppeteer.launch({
+            //@ts-ignore
             headless: true,
             args: ['--no-sandbox','--disable-setuid-sandbox']
         })
+
+        const userAgent = new UserAgent();
         let page = await browser.newPage();
         page.setDefaultNavigationTimeout(0);
         await page.goto(url);
-        await page.setUserAgent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.190 Safari/537.36");
+        // await page.setUserAgent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.190 Safari/537.36");
+        await page.setUserAgent(userAgent.toString());
         await page.waitForSelector('body');
         let pageTitle = await page.title();
         // page.on('console', event => {
@@ -115,6 +124,12 @@ export class WebsiteScraper {
 
         const images = await page.evaluate(() => Array.from(document.images, e => e.src));
 
+        pageElementRecords.forEach(x => {
+            if(x.textContent == "£625 pcm"){
+                console.log("Here");
+            }
+        })
+
         let couldBePriceRecords = [];
         let couldBeAvailabilityRecords = [];
         let couldBeImageRecords = [];
@@ -151,6 +166,13 @@ export class WebsiteScraper {
 
     couldBePrice(pageElementRecord: PageElementRecord): boolean {
         // console.log(element.className);
+        if(pageElementRecord.textContent == "£625 pcm"){
+            console.log("Here");
+        }
+
+        if(pageElementRecord.textContent.includes("£") || pageElementRecord.textContent.includes("$")){
+            return true;
+        }
 
         if(!pageElementRecord.className) {
             // console.log("1")

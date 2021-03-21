@@ -15,4 +15,5 @@ export interface ElementPriceRankingMap {
     noStrikethrough: number;
     emptyBasket: number;
     presenceOfDigits: number;
+    moreThanOneCurrencyValue: number;
 }

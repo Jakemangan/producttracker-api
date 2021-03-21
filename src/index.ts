@@ -31,6 +31,9 @@ import { UserService } from "./services/UserService";
 /*
 * TODO :: Fix "UnhandledPromiseRejectionWarning: TypeError: Cannot read property 'attributes' of undefined"
 * TODO :: Above is triggered by https://www.coindesk.com/price/bitcoin
+*
+* TODO :: UnhandledPromiseRejectionWarning: TypeError: Cannot read property 'elementData' of undefined at PriceScorer.run
+* TODO :: Above is triggered by https://www.autotrader.co.uk/car-details/202011126048680?model=S90&postcode=ls176we&advertising-location=at_cars&radius=1501&sort=relevance&onesearchad=Used&onesearchad=Nearly%20New&onesearchad=New&make=VOLVO&include-delivery-option=on&page=1
  */
 
 const options: cors.CorsOptions = {
@@ -172,8 +175,8 @@ app.get('/tracker/:userId', checkJwt, async (req, res) => {
 
         let trackers: ProductTracker[] = await productTrackerRepo.getTrackersByUserId(req.params.userId);
         for (const tracker of trackers) {
-            tracker.initialPricePretty = parsePrettyPrice(tracker.initialPrice, tracker.currencyType);
-            tracker.currentPricePretty = parsePrettyPrice(tracker.initialPrice, tracker.currencyType);
+            tracker.initialPricePretty = parsePrettyPrice(tracker.initialPrice, CurrencyType[tracker.currencyType]);
+            tracker.currentPricePretty = parsePrettyPrice(tracker.initialPrice, CurrencyType[tracker.currencyType]);
             tracker.datapoints = await trackerDatapointRepo.getAllDatapointsForUrl(tracker.url);
         }
         trackers = trackers.sort((a, b) => {

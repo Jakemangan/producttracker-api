@@ -1,8 +1,8 @@
 import {CurrencyType} from "./models/enums/CurrencyType";
 
-export function parsePrettyPrice(input: number, currencyType: string): string{
+export function parsePrettyPrice(input: number, currencyType: CurrencyType): string{
     let currencyTypeAsSymbol;
-    switch(parseInt(currencyType)){
+    switch(parseInt(currencyType.toString())){
         case CurrencyType.GBP:
             currencyTypeAsSymbol = "£";
             break;
