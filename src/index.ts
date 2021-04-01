@@ -9,7 +9,7 @@ import {ProductTrackerRepo} from "./repos/ProductTrackerRepo";
 import {PoolHandler} from "./repos/PoolHandler";
 import {CurrencyType} from "./models/enums/CurrencyType";
 import {ScrapingService} from "./services/ScrapingService";
-import {parsePrettyPrice} from "./utils";
+import {calculatePriceDifferencePercentage, parsePrettyPrice} from "./utils";
 import {TrackerDatapointRepo} from "./repos/TrackerDatapointRepo";
 import {TrackerUpdateService} from "./services/TrackerUpdateService";
 import {TrackerData} from "./models/TrackerData";
@@ -20,6 +20,7 @@ import * as jwksRsa from "jwks-rsa";
 import jwt_decode from "jwt-decode";
 import { UserRepo } from "./repos/UserRepo";
 import { UserService } from "./services/UserService";
+import { ConfirmedWebsiteRepo } from "./repos/ConfirmedWebsitesRepo";
 
 // let url = "https://www.ikea.com/gb/en/p/godmorgon-high-cabinet-brown-stained-ash-effect-40457851/";
 // let url = "https://www.tesco.com/groceries/en-GB/products/254896546?preservedReferrer=https://www.tesco.com/";
@@ -55,22 +56,22 @@ const app = express();
 app.use(bodyParser.json())
 app.use(cors());
 
-const checkJwt = jwt({
-    // Dynamically provide a signing key
-    // based on the kid in the header and
-    // the signing keys provided by the JWKS endpoint.
-    secret: jwksRsa.expressJwtSecret({
-        cache: true,
-        rateLimit: true,
-        jwksRequestsPerMinute: 5,
-        jwksUri: `https://dev-x1v77dqr.eu.auth0.com/.well-known/jwks.json`
-    }),
+// const checkJwt = jwt({
+//     // Dynamically provide a signing key
+//     // based on the kid in the header and
+//     // the signing keys provided by the JWKS endpoint.
+//     secret: jwksRsa.expressJwtSecret({
+//         cache: true,
+//         rateLimit: true,
+//         jwksRequestsPerMinute: 5,
+//         jwksUri: `https://dev-x1v77dqr.eu.auth0.com/.well-known/jwks.json`
+//     }),
 
-    // Validate the audience and the issuer.
-    audience: 'https://producttracker-api/',
-    issuer: `https://dev-x1v77dqr.eu.auth0.com/`,
-    algorithms: ['RS256']
-});
+//     // Validate the audience and the issuer.
+//     audience: 'https://producttracker-api/',
+//     issuer: `https://dev-x1v77dqr.eu.auth0.com/`,
+//     algorithms: ['RS256']
+// });
 
 /*
 * END SERVER CONFIG
@@ -85,6 +86,7 @@ let poolHandler = new PoolHandler();
 let productTrackerRepo = new ProductTrackerRepo(poolHandler);
 let trackerDatapointRepo = new TrackerDatapointRepo(poolHandler);
 let userRepo = new UserRepo(poolHandler);
+let confirmedWebsiteRepo = new ConfirmedWebsiteRepo(poolHandler);
 
 let scrapingService = new ScrapingService();
 let trackerUpdateService = new TrackerUpdateService(productTrackerRepo, scrapingService, trackerDatapointRepo);
@@ -116,10 +118,31 @@ app.post('/tracker/update/all', async (req, res) => {
 
 //TODO :: Temp
 app.post('/tracker/test', async (req, res) => {
-    if(req.body){
+    if(req.body.url){
         let url = req.body.url
         let trackerData = await scrapingService.getTrackerData(url);
+        if(!scrapingService.checkTrackerDataIsValid(trackerData)){
+            confirmedWebsiteRepo.insertNewConfirmedWebsiteEntry(new URL(url).hostname, false);
+            res.status(400).send();
+            return;
+        }
+        confirmedWebsiteRepo.insertNewConfirmedWebsiteEntry(new URL(url).hostname, true);
         res.status(200).json(trackerData);
+        return;
+    }
+})
+
+app.post('/tracker/hostname/confirmed', async (req, res) => {
+    if(req.body.url){
+        let url = req.body.url;
+        let confirmedEntry = await confirmedWebsiteRepo.getByHostname(new URL(url).hostname);
+        if(confirmedEntry && confirmedEntry.length > 0){
+            let entry = confirmedEntry[0];
+            res.status(200).json(entry.working);
+            return;
+        }
+        res.status(200).json(false);
+        return;
     }
 })
 
@@ -130,15 +153,22 @@ app.post('/tracker/add', async (req, res) => {
 
         let trackerData: TrackerData = await scrapingService.getTrackerData(url);
 
+        if(!scrapingService.checkTrackerDataIsValid(trackerData)){
+            res.status(400).json;
+        }
+
         let newTracker: ProductTracker = {
             id: uuid.v4(),
             owner: owner,
             url: url,
             title: trackerData.title,
-            initialPrice: trackerData.currentPrice,
-            initialPricePretty: trackerData.currentPricePretty,
-            currentPrice: trackerData.currentPrice,
-            currentPricePretty: trackerData.currentPricePretty,
+            priceData: {
+                currentPrice: trackerData.currentPrice,
+                currentPricePretty: trackerData.currentPricePretty,
+                initialPrice: trackerData.currentPrice,
+                initialPricePretty: trackerData.currentPricePretty,
+                priceDifference: 0
+            },
             dateStartedTracking: Date.now(),
             imageUrl: trackerData.largestImageSrc,
             trackingFrequency: TrackingFrequency.Daily,
@@ -156,7 +186,7 @@ app.post('/tracker/add', async (req, res) => {
     }
 })
 
-app.get('/tracker/:userId', checkJwt, async (req, res) => {
+app.get('/tracker/:userId', async (req, res) => {
     let token = req.headers['authorization'].split(" ")[1];
     let decoded = jwt_decode(<string>token);
     let jwtEmail = decoded["https://producttracker-api/email"];
@@ -175,8 +205,9 @@ app.get('/tracker/:userId', checkJwt, async (req, res) => {
 
         let trackers: ProductTracker[] = await productTrackerRepo.getTrackersByUserId(req.params.userId);
         for (const tracker of trackers) {
-            tracker.initialPricePretty = parsePrettyPrice(tracker.initialPrice, CurrencyType[tracker.currencyType]);
-            tracker.currentPricePretty = parsePrettyPrice(tracker.initialPrice, CurrencyType[tracker.currencyType]);
+            tracker.priceData.initialPricePretty = parsePrettyPrice(tracker.priceData.initialPrice, CurrencyType[tracker.currencyType]);
+            tracker.priceData.currentPricePretty = parsePrettyPrice(tracker.priceData.currentPrice, CurrencyType[tracker.currencyType]);
+            tracker.priceData.priceDifference = calculatePriceDifferencePercentage(tracker.priceData.initialPrice, tracker.priceData.currentPrice);
             tracker.datapoints = await trackerDatapointRepo.getAllDatapointsForUrl(tracker.url);
         }
         trackers = trackers.sort((a, b) => {
@@ -222,7 +253,7 @@ app.get("/datapoints/:url", async (req, res) => {
     }
 })
 
-app.get("/user/whoami/:email", checkJwt, async(req,res) => {
+app.get("/user/whoami/:email", async(req,res) => {
     let token = req.headers['authorization'].split(" ")[1];
     let decoded = jwt_decode(<string>token);
     let jwtEmail = decoded["https://producttracker-api/email"];

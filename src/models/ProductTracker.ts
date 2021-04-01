@@ -1,4 +1,5 @@
 import {TrackingFrequency} from "./enums/TrackingFrequency";
+import { ProductTrackerPriceData } from "./ProductTrackerPriceData";
 import {TrackerDatapoint} from "./TrackerDatapoint";
 
 export interface ProductTracker {
@@ -6,10 +7,7 @@ export interface ProductTracker {
     url: string,
     title: string,
     imageUrl: string,
-    initialPrice: number;
-    currentPrice: number;
-    initialPricePretty: string;
-    currentPricePretty: string;
+    priceData: ProductTrackerPriceData;
     trackingFrequency: TrackingFrequency,
     isAvailable: boolean,
     dateStartedTracking: number;

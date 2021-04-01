@@ -18,3 +18,9 @@ export function parsePrettyPrice(input: number, currencyType: CurrencyType): str
     let decimalSlice = priceAsString.slice(lengthOfPriceString-2, lengthOfPriceString);
     return currencyTypeAsSymbol + priceAsString.slice(0, lengthOfPriceString-2) + "." + decimalSlice;
 }
+
+export function calculatePriceDifferencePercentage(initial: number, current: number): number{
+    let difference = current - initial;
+    let differencePercentage = (difference / initial * 100);
+    return Math.round(differencePercentage);
+}

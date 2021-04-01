@@ -37,4 +37,13 @@ export class ScrapingService{
             largestImageSrc: largestImageSrc
         }
     }
+
+    public checkTrackerDataIsValid(input: TrackerData): boolean {
+        let priceRegex = /^(\d*([.,](?=\d{3}))?\d+)+((?!\2)[.,]\d\d)?$/;
+        let result = input.currentPrice.toString().match(priceRegex);
+        if(result){
+            return true;
+        }
+        return false;
+    }
 }
