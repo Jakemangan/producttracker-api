@@ -187,9 +187,9 @@ app.post('/tracker/add', async (req, res) => {
 })
 
 app.get('/tracker/:userId', async (req, res) => {
-    let token = req.headers['authorization'].split(" ")[1];
-    let decoded = jwt_decode(<string>token);
-    let jwtEmail = decoded["https://producttracker-api/email"];
+    // let token = req.headers['authorization'].split(" ")[1];
+    // let decoded = jwt_decode(<string>token);
+    // let jwtEmail = decoded["https://producttracker-api/email"];
 
     if(req.params.userId){
         let userData = await userService.getUserById(req.params.userId);
@@ -198,10 +198,10 @@ app.get('/tracker/:userId', async (req, res) => {
             return;
         }
 
-        if(userData.email != jwtEmail){
-            res.status(401).send("Unauthorised access.");
-            return;
-        }
+        // if(userData.email != jwtEmail){
+        //     res.status(401).send("Unauthorised access.");
+        //     return;
+        // }
 
         let trackers: ProductTracker[] = await productTrackerRepo.getTrackersByUserId(req.params.userId);
         for (const tracker of trackers) {
@@ -254,19 +254,15 @@ app.get("/datapoints/:url", async (req, res) => {
 })
 
 app.get("/user/whoami/:email", async(req,res) => {
-    let token = req.headers['authorization'].split(" ")[1];
-    let decoded = jwt_decode(<string>token);
-    let jwtEmail = decoded["https://producttracker-api/email"];
-
     if(!req.params.email){
         res.status(400).json("No email parameter.");
     }
 
-    if(jwtEmail != req.params.email){
-        res.status(401).send("Unauthorised access.");
-    }
+    // if(jwtEmail != req.params.email){
+    //     res.status(401).send("Unauthorised access.");
+    // }
 
-    let userData = await userService.getOrInitUser(jwtEmail);
+    let userData = await userService.getOrInitUser(req.params.email);
     if(userData){
         res.status(200).json(userData);
     } else {
