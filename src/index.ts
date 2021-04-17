@@ -21,6 +21,10 @@ import jwt_decode from "jwt-decode";
 import { UserRepo } from "./repos/UserRepo";
 import { UserService } from "./services/UserService";
 import { ConfirmedWebsiteRepo } from "./repos/ConfirmedWebsitesRepo";
+import {Provider} from "./provider";
+import {TrackerController} from "./controllers/tracker.controller";
+import {TrackerDatapointController} from "./controllers/tracker-datapoint.controller";
+import {AuthController} from "./controllers/auth.controller";
 
 // let url = "https://www.ikea.com/gb/en/p/godmorgon-high-cabinet-brown-stained-ash-effect-40457851/";
 // let url = "https://www.tesco.com/groceries/en-GB/products/254896546?preservedReferrer=https://www.tesco.com/";
@@ -56,43 +60,42 @@ const app = express();
 app.use(bodyParser.json())
 app.use(cors());
 
-// const checkJwt = jwt({
-//     // Dynamically provide a signing key
-//     // based on the kid in the header and
-//     // the signing keys provided by the JWKS endpoint.
-//     secret: jwksRsa.expressJwtSecret({
-//         cache: true,
-//         rateLimit: true,
-//         jwksRequestsPerMinute: 5,
-//         jwksUri: `https://dev-x1v77dqr.eu.auth0.com/.well-known/jwks.json`
-//     }),
-
-//     // Validate the audience and the issuer.
-//     audience: 'https://producttracker-api/',
-//     issuer: `https://dev-x1v77dqr.eu.auth0.com/`,
-//     algorithms: ['RS256']
-// });
+const provider = new Provider();
+const trackerController = new TrackerController(provider);
+const trackerDatapointController = new TrackerDatapointController(provider);
+const authController = new AuthController(provider);
 
 /*
 * END SERVER CONFIG
  */
 
+/*
+* START ROUTES
+ */
+
+//Tracker routes
+app.post('/tracker/update/all', trackerController.trackerUpdate);
+app.post('/tracker/test', trackerController.trackerTest) //TODO :: Temp
+app.post('/tracker/hostname/confirmed', trackerController.trackerHostnameConfirmed);
+app.post('/tracker/add', trackerController.trackerAdd);
+app.get('/tracker/:userId', trackerController.trackerByUserId)
+app.delete('/tracker/:trackerId', trackerController.trackerDelete)
+
+//Tracker datapoint routes
+app.get("/datapoints/:url", trackerDatapointController.getTrackerDatapointsByUrl);
+
+//Auth routes
+app.get("/user/whoami/:email", authController.getUserDataByEmail)
+
+/*
+* END ROUTES
+ */
 
 
 
-
-//TODO :: Create provider 
-let poolHandler = new PoolHandler();
-let productTrackerRepo = new ProductTrackerRepo(poolHandler);
-let trackerDatapointRepo = new TrackerDatapointRepo(poolHandler);
-let userRepo = new UserRepo(poolHandler);
-let confirmedWebsiteRepo = new ConfirmedWebsiteRepo(poolHandler);
-
-let scrapingService = new ScrapingService();
-let trackerUpdateService = new TrackerUpdateService(productTrackerRepo, scrapingService, trackerDatapointRepo);
-
-let userService = new UserService(userRepo);
-
+app.listen(process.env.PORT, () => {
+    return console.log(`server is listening on ${process.env.PORT}`);
+});
 
 
 
@@ -110,168 +113,20 @@ let userService = new UserService(userRepo);
 //     console.log("Currency type: ", CurrencyType[currencyTypeResult])
 // }
 
-app.post('/tracker/update/all', async (req, res) => {
-    //TODO :: Proper API auth
-    trackerUpdateService.updateAllTrackers().then(r => {});
-    res.status(200).send();
-})
 
-//TODO :: Temp
-app.post('/tracker/test', async (req, res) => {
-    if(req.body.url){
-        let url = req.body.url
-        let trackerData = await scrapingService.getTrackerData(url);
-        if(!scrapingService.checkTrackerDataIsValid(trackerData)){
-            confirmedWebsiteRepo.insertNewConfirmedWebsiteEntry(new URL(url).hostname, false);
-            res.status(400).send();
-            return;
-        }
-        confirmedWebsiteRepo.insertNewConfirmedWebsiteEntry(new URL(url).hostname, true);
-        res.status(200).json(trackerData);
-        return;
-    }
-})
 
-app.post('/tracker/hostname/confirmed', async (req, res) => {
-    if(req.body.url){
-        let url = req.body.url;
-        let confirmedEntry = await confirmedWebsiteRepo.getByHostname(new URL(url).hostname);
-        if(confirmedEntry && confirmedEntry.length > 0){
-            let entry = confirmedEntry[0];
-            res.status(200).json(entry.working);
-            return;
-        }
-        res.status(200).json(false);
-        return;
-    }
-})
 
-app.post('/tracker/add', async (req, res) => {
-    if(req.body){
-        let url = req.body.url
-        let owner = req.body.owner
 
-        let trackerData: TrackerData = await scrapingService.getTrackerData(url);
 
-        if(!scrapingService.checkTrackerDataIsValid(trackerData)){
-            res.status(400).json;
-        }
 
-        let newTracker: ProductTracker = {
-            id: uuid.v4(),
-            owner: owner,
-            url: url,
-            title: trackerData.title,
-            priceData: {
-                currentPrice: trackerData.currentPrice,
-                currentPricePretty: trackerData.currentPricePretty,
-                initialPrice: trackerData.currentPrice,
-                initialPricePretty: trackerData.currentPricePretty,
-                priceDifference: 0
-            },
-            dateStartedTracking: Date.now(),
-            imageUrl: trackerData.largestImageSrc,
-            trackingFrequency: TrackingFrequency.Daily,
-            currencyType: CurrencyType[trackerData.currencyType],
-            isAvailable: trackerData.isAvailable,
-            datapoints: await trackerDatapointRepo.getAllDatapointsForUrl(url)
-        }
 
-        try {
-            await productTrackerRepo.insertNewTracker(newTracker);
-            res.status(200).json(newTracker);
-        } catch(err){
-            res.status(400).json(err);
-        }
-    }
-})
 
-app.get('/tracker/:userId', async (req, res) => {
-    // let token = req.headers['authorization'].split(" ")[1];
-    // let decoded = jwt_decode(<string>token);
-    // let jwtEmail = decoded["https://producttracker-api/email"];
 
-    if(req.params.userId){
-        let userData = await userService.getUserById(req.params.userId);
-        if(!userData){
-            res.status(400).send("No user found with that Id.");
-            return;
-        }
 
-        // if(userData.email != jwtEmail){
-        //     res.status(401).send("Unauthorised access.");
-        //     return;
-        // }
 
-        let trackers: ProductTracker[] = await productTrackerRepo.getTrackersByUserId(req.params.userId);
-        for (const tracker of trackers) {
-            tracker.priceData.initialPricePretty = parsePrettyPrice(tracker.priceData.initialPrice, CurrencyType[tracker.currencyType]);
-            tracker.priceData.currentPricePretty = parsePrettyPrice(tracker.priceData.currentPrice, CurrencyType[tracker.currencyType]);
-            tracker.priceData.priceDifference = calculatePriceDifferencePercentage(tracker.priceData.initialPrice, tracker.priceData.currentPrice);
-            tracker.datapoints = await trackerDatapointRepo.getAllDatapointsForUrl(tracker.url);
-        }
-        trackers = trackers.sort((a, b) => {
-            return a.dateStartedTracking - b.dateStartedTracking
-        })
-        if(trackers){
-            if(trackers.length === 0){
-                res.status(201).send();
-                return;
-            }
-            res.status(200).json(trackers);
-            return;
-        } else {
-            res.status(400).send();
-            return;
-        }
-    }
-})
 
-app.delete('/tracker/:trackerId', async (req, res) => {
-    if(req.params.trackerId){
-        try {
-            await productTrackerRepo.deleteTrackerById(req.params.trackerId);
-            res.status(200).json();
-        } catch(err){
-            res.status(400).send();
-        }
-    }
-})
 
-app.get("/datapoints/:url", async (req, res) => {
-    if(req.params.url){
-        try{
-            let datapoints: TrackerDatapoint[] = await trackerDatapointRepo.getAllDatapointsForUrl(req.params.url);
-            if(datapoints.length > 0){
-                res.status(200).json(datapoints);
-            }
-            res.status(201).send();
-        }
-        catch(err){
-            res.status(400).send();
-        }
-    }
-})
 
-app.get("/user/whoami/:email", async(req,res) => {
-    if(!req.params.email){
-        res.status(400).json("No email parameter.");
-    }
 
-    // if(jwtEmail != req.params.email){
-    //     res.status(401).send("Unauthorised access.");
-    // }
-
-    let userData = await userService.getOrInitUser(req.params.email);
-    if(userData){
-        res.status(200).json(userData);
-    } else {
-        res.status(400).json("Bad request");
-    }
-})
-
-app.listen(process.env.PORT, () => {
-    return console.log(`server is listening on ${process.env.PORT}`);
-});
 
 
