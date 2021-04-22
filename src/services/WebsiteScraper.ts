@@ -34,7 +34,7 @@ export class WebsiteScraper {
         let page = await browser.newPage();
         page.setDefaultNavigationTimeout(0);
         await page.goto(url);
-        // await page.setUserAgent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.190 Safari/537.36");
+        // await page.setUserAgent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.\4324.190 Safari/537.36");
         await page.setUserAgent(userAgent.toString());
         await page.waitForSelector('body');
         let pageTitle = await page.title();

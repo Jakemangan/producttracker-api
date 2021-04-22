@@ -79,6 +79,7 @@ app.post('/tracker/test', trackerController.trackerTest) //TODO :: Temp
 app.post('/tracker/hostname/confirmed', trackerController.trackerHostnameConfirmed);
 app.post('/tracker/add', trackerController.trackerAdd);
 app.get('/tracker/:userId', trackerController.trackerByUserId)
+app.put('/tracker/config', trackerController.trackerConfigUpdate);
 app.delete('/tracker/:trackerId', trackerController.trackerDelete)
 
 //Tracker datapoint routes

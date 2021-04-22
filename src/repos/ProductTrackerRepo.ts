@@ -2,6 +2,7 @@ import {ProductTracker, ProductTrackerDbo} from "../models/ProductTracker";
 import {PoolHandler} from "./PoolHandler";
 import {PoolClient} from "pg";
 import {TrackerData} from "../models/TrackerData";
+import {TrackerConfig} from "../models/TrackerConfig";
 
 export class ProductTrackerRepo {
 
@@ -62,6 +63,27 @@ export class ProductTrackerRepo {
                 }
                 if(results){
                     resolve(results.rows.map<ProductTracker>(row => this.productTrackerDboToObject(row)));
+                    return;
+                }
+                reject();
+                return;
+            });
+        })
+    }
+
+    getTrackersById = async (id: string): Promise<ProductTracker> => {
+        let client = await this.pool.getClient();
+        let query = 'SELECT * from product_trackers WHERE id = $1';
+        let values = [id];
+        return new Promise((resolve, reject) => {
+            client.query(query, values, (error, results) => {
+                client.release();
+                if (error) {
+                    reject();
+                    throw error;
+                }
+                if(results){
+                    resolve(results.rows.map<ProductTracker>(row => this.productTrackerDboToObject(row))[0]);
                     return;
                 }
                 reject();
@@ -143,6 +165,32 @@ export class ProductTrackerRepo {
             Date.now(),
             trackerData.currencyType,
             urlToUpdate
+        ]
+        return new Promise((resolve, reject) => {
+            client.query(query, values, (error, results) => {
+                client.release();
+                if(error){
+                    reject();
+                    throw error;
+                }
+                if(results){
+                    resolve();
+                    return;
+                }
+                reject();
+                return;
+            })
+        })
+    }
+
+    updateExistingTrackerConfig = async (idToUpdate: string, trackerConfig: TrackerConfig): Promise<void> => {
+        let client: PoolClient = await this.pool.getClient();
+        let query = "UPDATE product_trackers SET" +
+            " tracking_frequency = $1" +
+            " WHERE id = $2"
+        let values = [
+            trackerConfig.trackingFrequency,
+            idToUpdate
         ]
         return new Promise((resolve, reject) => {
             client.query(query, values, (error, results) => {

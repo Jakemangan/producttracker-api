@@ -5,6 +5,7 @@ import * as uuid from "uuid";
 import {TrackingFrequency} from "../models/enums/TrackingFrequency";
 import {CurrencyType} from "../models/enums/CurrencyType";
 import {calculatePriceDifferencePercentage, parsePrettyPrice} from "../utils";
+import {TrackerConfig} from "../models/TrackerConfig";
 
 export class TrackerController{
 
@@ -58,7 +59,7 @@ export class TrackerController{
     }
 
     public trackerAdd = async (req, res) => {
-        if(req.body){
+        if(req.body.url && req.body.owner){
             let url = req.body.url
             let owner = req.body.owner
 
@@ -91,6 +92,23 @@ export class TrackerController{
             try {
                 await this.provider.ProductTrackerRepo.insertNewTracker(newTracker);
                 res.status(200).json(newTracker);
+            } catch(err){
+                res.status(400).json(err);
+            }
+        }
+    }
+
+    public trackerConfigUpdate = async (req, res) => {
+        if(req.body.id && req.body.config){
+            let trackerConfig: TrackerConfig = req.body.config;
+            try{
+                await this.provider.ProductTrackerRepo.updateExistingTrackerConfig(req.body.id, trackerConfig);
+                let updatedTracker = await this.provider.ProductTrackerRepo.getTrackersById(req.body.id);
+                updatedTracker.priceData.initialPricePretty = parsePrettyPrice(updatedTracker.priceData.initialPrice, CurrencyType[updatedTracker.currencyType]);
+                updatedTracker.priceData.currentPricePretty = parsePrettyPrice(updatedTracker.priceData.currentPrice, CurrencyType[updatedTracker.currencyType]);
+                updatedTracker.priceData.priceDifference = calculatePriceDifferencePercentage(updatedTracker.priceData.initialPrice, updatedTracker.priceData.currentPrice);
+                updatedTracker.datapoints = await this.provider.TrackerDatapointRepo.getAllDatapointsForUrl(updatedTracker.url);
+                res.status(200).json(updatedTracker);
             } catch(err){
                 res.status(400).json(err);
             }
